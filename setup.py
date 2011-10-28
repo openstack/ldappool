@@ -33,7 +33,7 @@
 # the terms of any one of the MPL, the GPL or the LGPL.
 #
 # ***** END LICENSE BLOCK *****
-from distutils import setup
+from distutils.core import setup
 
 
 with open('README.rst') as f:
@@ -47,4 +47,4 @@ setup(name='ldappool', version='0.9',
       long_description=README,
       url='https://github.com/mozilla-services/ldappool',
       keywords=['python-ldap', 'ldap', 'pool'],
-      licence="MPL")
+      license="MPL")
