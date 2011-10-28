@@ -33,18 +33,17 @@
 # the terms of any one of the MPL, the GPL or the LGPL.
 #
 # ***** END LICENSE BLOCK *****
-from setuptools import setup, find_packages
+from distutils import setup
 
-
-install_requires = ['python-ldap']
 
 with open('README.rst') as f:
     README = f.read()
 
 
-setup(name='ldappool', version='0.9', packages=find_packages(),
+setup(name='ldappool', version='0.9',
+      packages=['ldappool', 'ldappool.tests'],
       author='Mozilla Services', author_email='services-dev@mozilla.org',
       description="A connection pool for python-ldap",
       long_description=README,
       url='https://github.com/mozilla-services/ldappool',
-      install_requires=install_requires)
+      licence="MPL")

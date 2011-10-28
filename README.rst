@@ -13,6 +13,8 @@ The pool has useful features like:
 - configurable max lifetime for connectors
 - a context manager to simplify acquiring and releasing a connector
 
+**You need python-ldap in order to use this library**
+
 
 Quickstart
 ::::::::::
