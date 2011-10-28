@@ -46,4 +46,5 @@ setup(name='ldappool', version='0.9',
       description="A connection pool for python-ldap",
       long_description=README,
       url='https://github.com/mozilla-services/ldappool',
+      keywords=['python-ldap', 'ldap', 'pool'],
       licence="MPL")
