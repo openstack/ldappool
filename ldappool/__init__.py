@@ -129,7 +129,7 @@ class ConnectionManager(object):
         self.bind = bind
         self.passwd = passwd
         self._pool_lock = RLock()
-        self.use_tls = False
+        self.use_tls = use_tls
         self.timeout = timeout
         self.connector_cls = connector_cls
         self.use_pool = use_pool
