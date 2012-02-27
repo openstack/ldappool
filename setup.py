@@ -40,11 +40,15 @@ with open('README.rst') as f:
     README = f.read()
 
 
+with open('CHANGES.rst') as f:
+    CHANGES = f.read()
+
+
 setup(name='ldappool', version='0.9',
       packages=['ldappool', 'ldappool.tests'],
       author='Mozilla Services', author_email='services-dev@mozilla.org',
       description="A connection pool for python-ldap",
-      long_description=README,
+      long_description=README + '\n' + CHANGES,
       url='https://github.com/mozilla-services/ldappool',
       keywords=['python-ldap', 'ldap', 'pool'],
       license="MPL")
