@@ -44,7 +44,7 @@ with open('CHANGES.rst') as f:
     CHANGES = f.read()
 
 
-setup(name='ldappool', version='0.9',
+setup(name='ldappool', version='1.0',
       packages=['ldappool', 'ldappool.tests'],
       author='Mozilla Services', author_email='services-dev@mozilla.org',
       description="A connection pool for python-ldap",
