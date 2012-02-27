@@ -118,6 +118,10 @@ class LDAPWorker(threading.Thread):
 
 class TestLDAPSQLAuth(unittest.TestCase):
 
+    def test_ctor_args(self):
+        pool = ConnectionManager('ldap://localhost', use_tls=True)
+        self.assertEqual(pool.use_tls, True)
+
     def test_pool(self):
         dn = 'uid=adminuser,ou=logins,dc=mozilla'
         passwd = 'adminuser'

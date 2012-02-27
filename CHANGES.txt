@@ -1,0 +1,6 @@
+Next release
+------------
+
+- Fix ``use_tls`` flag to ConnectionManager; it previously was always set
+  ``False`` no matter what was passed.
+
