@@ -139,7 +139,8 @@ class ConnectionManager(object):
         return len(self._pool)
 
     def _match(self, bind, passwd):
-        passwd = passwd.encode('utf8')
+        if passwd is not None:
+            passwd = passwd.encode('utf8')
         with self._pool_lock:
             inactives = []
 
@@ -200,7 +201,8 @@ class ConnectionManager(object):
         """
         tries = 0
         connected = False
-        passwd = passwd.encode('utf8')
+        if passwd is not None:
+            passwd = passwd.encode('utf8')
         exc = None
         conn = None
 
