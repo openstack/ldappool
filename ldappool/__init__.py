@@ -202,6 +202,7 @@ class ConnectionManager(object):
         connected = False
         passwd = passwd.encode('utf8')
         exc = None
+        conn = None
 
         # trying retry_max times in a row with a fresh connector
         while tries < self.retry_max and not connected:
