@@ -35,12 +35,12 @@
 # ***** END LICENSE BLOCK *****
 """ LDAP Connection Pool.
 """
-import time
 from contextlib import contextmanager
 from threading import RLock
+import time
 
-from ldap.ldapobject import ReconnectLDAPObject
 import ldap
+from ldap.ldapobject import ReconnectLDAPObject
 
 
 class MaxConnectionReachedError(Exception):
@@ -54,7 +54,8 @@ class BackendError(Exception):
 
 
 class StateConnector(ReconnectLDAPObject):
-    """Just remembers who is connected, and if connected"""
+    """Just remembers who is connected, and if connected."""
+
     def __init__(self, *args, **kw):
         ReconnectLDAPObject.__init__(self, *args, **kw)
         self.connected = False
@@ -117,6 +118,7 @@ class ConnectionManager(object):
 
     Provides a context manager for LDAP connectors.
     """
+
     def __init__(self, uri, bind=None, passwd=None, size=10, retry_max=3,
                  retry_delay=.1, use_tls=False, timeout=-1,
                  connector_cls=StateConnector, use_pool=True,
@@ -174,7 +176,7 @@ class ConnectionManager(object):
                     try:
                         self._bind(conn, bind, passwd)
                         return conn
-                    except:
+                    except Exception:
                         self._pool.remove(conn)
 
                 return None
@@ -193,7 +195,7 @@ class ConnectionManager(object):
         conn.active = True
 
     def _create_connector(self, bind, passwd):
-        """Creates a connector, binds it, and returns it
+        """Creates a connector, binds it, and returns it.
 
         Args:
             - bind: login
@@ -214,7 +216,7 @@ class ConnectionManager(object):
                 conn.timeout = self.timeout
                 self._bind(conn, bind, passwd)
                 connected = True
-            except ldap.LDAPError, exc:
+            except ldap.LDAPError as exc:
                 time.sleep(self.retry_delay)
                 tries += 1
 
@@ -280,13 +282,12 @@ class ConnectionManager(object):
 
     @contextmanager
     def connection(self, bind=None, passwd=None):
-        """Creates a context'ed connector, binds it, and returns it
+        """Creates a context'ed connector, binds it, and returns it.
 
         Args:
             - bind: login
             - passwd: password
         """
-
         tries = 0
         conn = None
         while tries < self.retry_max:
@@ -315,13 +316,12 @@ class ConnectionManager(object):
             self._release_connection(conn)
 
     def purge(self, bind, passwd=None):
-        """Purge a connector
+        """Purge a connector.
 
         Args:
             - bind: login
             - passwd: password
         """
-
         if self.use_pool:
             return
 

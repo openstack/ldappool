@@ -34,10 +34,10 @@
 #
 # ***** END LICENSE BLOCK *****
 import unittest
+
 import ldap
 
-from ldappool import (ConnectionManager, StateConnector, BackendError,
-                      MaxConnectionReachedError)
+import ldappool
 
 
 def _bind(self, who='', cred='', **kw):
@@ -58,17 +58,17 @@ def _bind_fails2(self, who='', cred='', **kw):
 class TestLDAPConnection(unittest.TestCase):
 
     def setUp(self):
-        self.old = StateConnector.simple_bind_s
-        StateConnector.simple_bind_s = _bind
+        self.old = ldappool.StateConnector.simple_bind_s
+        ldappool.StateConnector.simple_bind_s = _bind
 
     def tearDown(self):
-        StateConnector.simple_bind_s = self.old
+        ldappool.StateConnector.simple_bind_s = self.old
 
     def test_connection(self):
         uri = ''
         dn = 'uid=adminuser,ou=logins,dc=mozilla'
         passwd = 'adminuser'
-        cm = ConnectionManager(uri, dn, passwd, use_pool=True, size=2)
+        cm = ldappool.ConnectionManager(uri, dn, passwd, use_pool=True, size=2)
         self.assertEqual(len(cm), 0)
 
         with cm.connection('dn', 'pass'):
@@ -86,7 +86,7 @@ class TestLDAPConnection(unittest.TestCase):
                 try:
                     with cm.connection('dn', 'pass'):
                         pass
-                except MaxConnectionReachedError:
+                except ldappool.MaxConnectionReachedError:
                     pass
                 else:
                     raise AssertionError()
@@ -122,18 +122,18 @@ class TestLDAPConnection(unittest.TestCase):
             unbinds.append(1)
 
         # the binding fails with an LDAPError
-        StateConnector.simple_bind_s = _bind_fails2
-        StateConnector.unbind_s = _unbind
+        ldappool.StateConnector.simple_bind_s = _bind_fails2
+        ldappool.StateConnector.unbind_s = _unbind
         uri = ''
         dn = 'uid=adminuser,ou=logins,dc=mozilla'
         passwd = 'adminuser'
-        cm = ConnectionManager(uri, dn, passwd, use_pool=True, size=2)
+        cm = ldappool.ConnectionManager(uri, dn, passwd, use_pool=True, size=2)
         self.assertEqual(len(cm), 0)
 
         try:
             with cm.connection('dn', 'pass'):
                 pass
-        except BackendError:
+        except ldappool.BackendError:
             pass
         else:
             raise AssertionError()

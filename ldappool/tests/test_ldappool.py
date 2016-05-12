@@ -33,29 +33,34 @@
 # the terms of any one of the MPL, the GPL or the LGPL.
 #
 # ***** END LICENSE BLOCK *****
-import unittest
 import threading
 import time
+import unittest
+
 import ldap
-from ldappool import (ConnectionManager, StateConnector,
-                      MaxConnectionReachedError)
+
+import ldappool
 
 # patching StateConnector
-StateConnector.users = {'uid=tarek,ou=users,dc=mozilla':
-                                    {'uidNumber': ['1'],
-                                        'account-enabled': ['Yes'],
-                                        'mail': ['tarek@mozilla.com'],
-                                        'cn': ['tarek']},
-                        'cn=admin,dc=mozilla': {'cn': ['admin'],
-                                                'mail': ['admin'],
-                                                'uidNumber': ['100']}}
+ldappool.StateConnector.users = {
+    'uid=tarek,ou=users,dc=mozilla':
+        {'uidNumber': ['1'],
+         'account-enabled': ['Yes'],
+         'mail': ['tarek@mozilla.com'],
+         'cn': ['tarek']},
+    'cn=admin,dc=mozilla': {'cn': ['admin'],
+                            'mail': ['admin'],
+                            'uidNumber': ['100']}}
+
 
 def _simple_bind(self, who='', cred='', *args):
     self.connected = True
     self.who = who
     self.cred = cred
 
-StateConnector.simple_bind_s = _simple_bind
+
+ldappool.StateConnector.simple_bind_s = _simple_bind
+
 
 def _search(self, dn, *args, **kw):
     if dn in self.users:
@@ -69,7 +74,9 @@ def _search(self, dn, *args, **kw):
 
     raise ldap.NO_SUCH_OBJECT
 
-StateConnector.search_s = _search
+
+ldappool.StateConnector.search_s = _search
+
 
 def _add(self, dn, user):
     self.users[dn] = {}
@@ -80,7 +87,9 @@ def _add(self, dn, user):
 
     return ldap.RES_ADD, ''
 
-StateConnector.add_s = _add
+
+ldappool.StateConnector.add_s = _add
+
 
 def _modify(self, dn, user):
     if dn in self.users:
@@ -90,14 +99,17 @@ def _modify(self, dn, user):
             self.users[dn][key] = value
     return ldap.RES_MODIFY, ''
 
-StateConnector.modify_s = _modify
+
+ldappool.StateConnector.modify_s = _modify
+
 
 def _delete(self, dn):
     if dn in self.users:
         del self.users[dn]
     return ldap.RES_DELETE, ''
 
-StateConnector.delete_s = _delete
+
+ldappool.StateConnector.delete_s = _delete
 
 
 class LDAPWorker(threading.Thread):
@@ -119,13 +131,13 @@ class LDAPWorker(threading.Thread):
 class TestLDAPSQLAuth(unittest.TestCase):
 
     def test_ctor_args(self):
-        pool = ConnectionManager('ldap://localhost', use_tls=True)
+        pool = ldappool.ConnectionManager('ldap://localhost', use_tls=True)
         self.assertEqual(pool.use_tls, True)
 
     def test_pool(self):
         dn = 'uid=adminuser,ou=logins,dc=mozilla'
         passwd = 'adminuser'
-        pool = ConnectionManager('ldap://localhost', dn, passwd)
+        pool = ldappool.ConnectionManager('ldap://localhost', dn, passwd)
         workers = [LDAPWorker(pool) for i in range(10)]
 
         for worker in workers:
@@ -133,16 +145,16 @@ class TestLDAPSQLAuth(unittest.TestCase):
 
         for worker in workers:
             worker.join()
-            self.assertEquals(len(worker.results), 10)
+            self.assertEqual(len(worker.results), 10)
             cn = worker.results[0][0][1]['cn']
-            self.assertEquals(cn, ['admin'])
+            self.assertEqual(cn, ['admin'])
 
     def test_pool_full(self):
         dn = 'uid=adminuser,ou=logins,dc=mozilla'
         passwd = 'adminuser'
-        pool = ConnectionManager('ldap://localhost', dn, passwd, size=1,
-                                 retry_delay=1., retry_max=5,
-                                 use_pool=True)
+        pool = ldappool.ConnectionManager(
+            'ldap://localhost', dn, passwd, size=1, retry_delay=1.,
+            retry_max=5, use_pool=True)
 
         class Worker(threading.Thread):
 
@@ -182,7 +194,7 @@ class TestLDAPSQLAuth(unittest.TestCase):
         worker1 = Worker(pool, 1.1)
         worker1.start()
         try:
-            self.assertRaises(MaxConnectionReachedError, tryit)
+            self.assertRaises(ldappool.MaxConnectionReachedError, tryit)
         finally:
             worker1.join()
 
@@ -192,8 +204,8 @@ class TestLDAPSQLAuth(unittest.TestCase):
     def test_pool_cleanup(self):
         dn = 'uid=adminuser,ou=logins,dc=mozilla'
         passwd = 'adminuser'
-        pool = ConnectionManager('ldap://localhost', dn, passwd, size=1,
-                                 use_pool=True)
+        pool = ldappool.ConnectionManager('ldap://localhost', dn, passwd,
+                                          size=1, use_pool=True)
         with pool.connection('bind1') as conn:  # NOQA
             pass
 
@@ -207,8 +219,8 @@ class TestLDAPSQLAuth(unittest.TestCase):
     def test_pool_reuse(self):
         dn = 'uid=adminuser,ou=logins,dc=mozilla'
         passwd = 'adminuser'
-        pool = ConnectionManager('ldap://localhost', dn, passwd,
-                                 use_pool=True)
+        pool = ldappool.ConnectionManager('ldap://localhost', dn, passwd,
+                                          use_pool=True)
 
         with pool.connection() as conn:
             self.assertTrue(conn.active)
