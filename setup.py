@@ -33,25 +33,16 @@
 # the terms of any one of the MPL, the GPL or the LGPL.
 #
 # ***** END LICENSE BLOCK *****
+import setuptools
+
+# In python < 2.7.4, a lazy loading of package `pbr` will break
+# setuptools if some other modules registered functions in `atexit`.
+# solution from: http://bugs.python.org/issue15881#msg170215
 try:
-    from setuptools import setup
+    import multiprocessing  # noqa
 except ImportError:
-    from distutils.core import setup
+    pass
 
-
-with open('README.rst') as f:
-    README = f.read()
-
-
-with open('CHANGES.rst') as f:
-    CHANGES = f.read()
-
-
-setup(name='ldappool', version='1.1',
-      packages=['ldappool', 'ldappool.tests'],
-      author='Mozilla Services', author_email='services-dev@mozilla.org',
-      description="A connection pool for python-ldap",
-      long_description=README + '\n' + CHANGES,
-      url='https://github.com/mozilla-services/ldappool',
-      keywords=['python-ldap', 'ldap', 'pool'],
-      license="MPL")
+setuptools.setup(
+    setup_requires=['pbr>=1.8'],
+    pbr=True)
