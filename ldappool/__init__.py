@@ -35,6 +35,7 @@
 # ***** END LICENSE BLOCK *****
 """ LDAP Connection Pool.
 """
+import codecs
 from contextlib import contextmanager
 import logging
 from threading import RLock
@@ -42,9 +43,29 @@ import time
 
 import ldap
 from ldap.ldapobject import ReconnectLDAPObject
-
+import six
 
 log = logging.getLogger(__name__)
+_utf8_encoder = codecs.getencoder('utf-8')
+
+
+def utf8_encode(value):
+    """Encode a basestring to UTF-8.
+
+    If the string is unicode encode it to UTF-8, if the string is
+    str then assume it's already encoded. Otherwise raise a TypeError.
+
+    :param value: A basestring
+    :returns: UTF-8 encoded version of value
+    :raises TypeError: If value is not basestring
+    """
+    if isinstance(value, six.text_type):
+        return _utf8_encoder(value)[0]
+    elif isinstance(value, six.binary_type):
+        return value
+    else:
+        raise TypeError("bytes or Unicode expected, got %s"
+                        % type(value).__name__)
 
 
 class MaxConnectionReachedError(Exception):
@@ -146,7 +167,7 @@ class ConnectionManager(object):
 
     def _match(self, bind, passwd):
         if passwd is not None:
-            passwd = passwd.encode('utf8')
+            passwd = utf8_encode(passwd)
         with self._pool_lock:
             inactives = []
 
@@ -214,7 +235,7 @@ class ConnectionManager(object):
         tries = 0
         connected = False
         if passwd is not None:
-            passwd = passwd.encode('utf8')
+            passwd = utf8_encode(passwd)
         exc = None
         conn = None
 
@@ -226,7 +247,8 @@ class ConnectionManager(object):
                 conn.timeout = self.timeout
                 self._bind(conn, bind, passwd)
                 connected = True
-            except ldap.LDAPError as exc:
+            except ldap.LDAPError as error:
+                exc = error
                 time.sleep(self.retry_delay)
                 if tries < self.retry_max:
                     log.info('Failure attempting to create and bind '
@@ -348,7 +370,7 @@ class ConnectionManager(object):
             return
 
         if passwd is not None:
-            passwd = passwd.encode('utf8')
+            passwd = utf8_encode(passwd)
 
         with self._pool_lock:
             for conn in list(self._pool):
