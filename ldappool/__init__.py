@@ -204,9 +204,12 @@ class ConnectionManager(object):
     def _create_connector(self, bind, passwd):
         """Creates a connector, binds it, and returns it.
 
-        Args:
-            - bind: login
-            - passwd: password
+        :param bind: user login
+        :type bind: string
+        :param passwd: user password
+        :type passwd: string
+        :returns: StateConnector
+        :raises BackendError: If unable to connect to LDAP
         """
         tries = 0
         connected = False
@@ -299,9 +302,12 @@ class ConnectionManager(object):
     def connection(self, bind=None, passwd=None):
         """Creates a context'ed connector, binds it, and returns it.
 
-        Args:
-            - bind: login
-            - passwd: password
+        :param bind: user login
+        :type bind: string
+        :param passwd: user password
+        :type passwd: string
+        :returns: StateConnector
+        :raises MaxConnectionReachedError: If unable to connect to LDAP
         """
         tries = 0
         conn = None
@@ -333,9 +339,10 @@ class ConnectionManager(object):
     def purge(self, bind, passwd=None):
         """Purge a connector.
 
-        Args:
-            - bind: login
-            - passwd: password
+        :param bind: user login
+        :type bind: string
+        :param passwd: user password
+        :type passwd: string
         """
         if self.use_pool:
             return
