@@ -36,11 +36,15 @@
 """ LDAP Connection Pool.
 """
 from contextlib import contextmanager
+import logging
 from threading import RLock
 import time
 
 import ldap
 from ldap.ldapobject import ReconnectLDAPObject
+
+
+log = logging.getLogger(__name__)
 
 
 class MaxConnectionReachedError(Exception):
@@ -158,7 +162,8 @@ class ConnectionManager(object):
                     try:
                         conn.unbind_s()
                     except Exception:
-                        pass  # XXX we will see later
+                        log.debug('Failure attempting to unbind after '
+                                  'timeout; should be harmless', exc_info=True)
 
                     self._pool.remove(conn)
                     continue
@@ -177,6 +182,8 @@ class ConnectionManager(object):
                         self._bind(conn, bind, passwd)
                         return conn
                     except Exception:
+                        log.debug('Removing connection from pool after '
+                                  'failure to rebind', exc_info=True)
                         self._pool.remove(conn)
 
                 return None
@@ -218,6 +225,13 @@ class ConnectionManager(object):
                 connected = True
             except ldap.LDAPError as exc:
                 time.sleep(self.retry_delay)
+                if tries < self.retry_max:
+                    log.info('Failure attempting to create and bind '
+                             'connector; will retry after %r seconds',
+                             self.retry_delay, exc_info=True)
+                else:
+                    log.error('Failure attempting to create and bind '
+                              'connector', exc_info=True)
                 tries += 1
 
         if not connected:
@@ -278,7 +292,8 @@ class ConnectionManager(object):
             connection.unbind_ext_s()
         except ldap.LDAPError:
             # avoid error on invalid state
-            pass
+            log.debug('Failure attempting to unbind on release; '
+                      'should be harmless', exc_info=True)
 
     @contextmanager
     def connection(self, bind=None, passwd=None):
@@ -340,5 +355,6 @@ class ConnectionManager(object):
                     conn.unbind_ext_s()
                 except ldap.LDAPError:
                     # invalid state
-                    pass
+                    log.debug('Failure attempting to unbind on purge; '
+                              'should be harmless', exc_info=True)
                 self._pool.remove(conn)
