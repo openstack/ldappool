@@ -149,7 +149,6 @@ class TestLDAPSQLAuth(unittest.TestCase):
             cn = worker.results[0][0][1]['cn']
             self.assertEqual(cn, ['admin'])
 
-    @unittest.skip("race conditions make this fail the gate")
     def test_pool_full(self):
         dn = 'uid=adminuser,ou=logins,dc=mozilla'
         passwd = 'adminuser'
@@ -169,6 +168,7 @@ class TestLDAPSQLAuth(unittest.TestCase):
                     time.sleep(self.duration)
 
         def tryit():
+            time.sleep(0.1)
             with pool.connection() as conn:  # NOQA
                 pass
 
