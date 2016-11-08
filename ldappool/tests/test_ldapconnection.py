@@ -133,7 +133,7 @@ class TestLDAPConnection(unittest.TestCase):
         try:
             with cm.connection('dn', 'pass'):
                 pass
-        except ldappool.BackendError:
+        except ldap.SERVER_DOWN:
             pass
         else:
             raise AssertionError()
