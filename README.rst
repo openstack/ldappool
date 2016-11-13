@@ -1,7 +1,7 @@
 ldappool
 ========
 
-A simple connector pool for python-ldap.
+A simple connector pool for pyldap.
 
 The pool keeps LDAP connectors alive and let you reuse them,
 drastically reducing the time spent to initiate a ldap connection.
@@ -13,8 +13,7 @@ The pool has useful features like:
 - configurable max lifetime for connectors
 - a context manager to simplify acquiring and releasing a connector
 
-**You need python-ldap in order to use this library**
-
+**You need pyldap in order to use this library**
 
 Quickstart
 ::::::::::
@@ -31,7 +30,7 @@ context manager with the *connection* method::
 
 
 The connector returned by *connection* is a LDAPObject, that's binded to the
-server. See http://www.python-ldap.org/ for details on how to use a connector.
+server. See https://github.com/pyldap/pyldap/ for details on how to use a connector.
 
 
 ConnectionManager options
@@ -59,3 +58,10 @@ The **connection** method takes two options:
   **default: None**
 - **passwd**: password used to connect. If None, uses the pool default's.
   **default: None**
+
+
+History
+:::::::
+
+Prior to v2.0.0 ``ldappool`` required ``python-ldap``. As of v2.0.0 this
+library now required ``pyldap``, a python 3 compatible fork of ``python-ldap``.
