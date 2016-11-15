@@ -221,7 +221,6 @@ class ConnectionManager(object):
                 raise BackendError('Could not activate TLS on established '
                                    'connection with %s' % self.uri,
                                    backend=conn)
-            conn.start_tls_s()
 
         if bind is not None:
             conn.simple_bind_s(bind, passwd)
