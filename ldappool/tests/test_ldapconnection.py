@@ -55,14 +55,25 @@ def _bind_fails2(self, who='', cred='', **kw):
     raise ldap.SERVER_DOWN('LDAP connection invalid')
 
 
+def _start_tls_s(self):
+    if self.start_tls_already_called_flag:
+        raise ldap.LOCAL_ERROR
+    else:
+        self.start_tls_already_called_flag = True
+
+
 class TestLDAPConnection(unittest.TestCase):
 
     def setUp(self):
         self.old = ldappool.StateConnector.simple_bind_s
         ldappool.StateConnector.simple_bind_s = _bind
+        self.old_start_tls_s = ldappool.StateConnector.start_tls_s
+        ldappool.StateConnector.start_tls_s = _start_tls_s
+        ldappool.StateConnector.start_tls_already_called_flag = False
 
     def tearDown(self):
         ldappool.StateConnector.simple_bind_s = self.old
+        ldappool.StateConnector.start_tls_s = self.old_start_tls_s
 
     def test_connection(self):
         uri = ''
@@ -114,6 +125,15 @@ class TestLDAPConnection(unittest.TestCase):
         # every connector is marked inactive
         self.assertFalse(cm._pool[0].active)
         self.assertFalse(cm._pool[1].active)
+
+    def test_tls_connection(self):
+        uri = ''
+        dn = 'uid=adminuser,ou=logins,dc=mozilla'
+        passwd = 'adminuser'
+        cm = ldappool.ConnectionManager(uri, dn, passwd, use_pool=True,
+                                        size=2, use_tls=True)
+        with cm.connection():
+            pass
 
     def test_simple_bind_fails(self):
         unbinds = []
