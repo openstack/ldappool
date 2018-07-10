@@ -13,7 +13,6 @@ coverage.xml
 cover/*
 covhtml
 pep8.txt
-nosetests.xml
 doc/build
 .DS_Store
 doc/source/api
@@ -24,5 +23,5 @@ build/
 dist/
 .project
 .pydevproject
-.testrepository/
+.stestr/
 *.db
