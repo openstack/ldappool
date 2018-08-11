@@ -55,6 +55,10 @@ def _bind_fails2(self, who='', cred='', **kw):
     raise ldap.SERVER_DOWN('LDAP connection invalid')
 
 
+def _bind_fails_invalid_credentials(self, who='', cred='', **kw):
+    raise ldap.INVALID_CREDENTIALS('LDAP connection invalid')
+
+
 def _start_tls_s(self):
     if self.start_tls_already_called_flag:
         raise ldap.LOCAL_ERROR
@@ -154,6 +158,29 @@ class TestLDAPConnection(unittest.TestCase):
             with cm.connection('dn', 'pass'):
                 pass
         except ldap.SERVER_DOWN:
+            pass
+        else:
+            raise AssertionError()
+
+    def test_simple_bind_fails_invalid_credentials(self):
+        unbinds = []
+
+        def _unbind(self):
+            unbinds.append(1)
+
+        # the binding fails with an LDAPError
+        ldappool.StateConnector.simple_bind_s = _bind_fails_invalid_credentials
+        ldappool.StateConnector.unbind_s = _unbind
+        uri = ''
+        dn = 'uid=adminuser,ou=logins,dc=mozilla'
+        passwd = 'adminuser'
+        cm = ldappool.ConnectionManager(uri, dn, passwd, use_pool=True, size=2)
+        self.assertEqual(len(cm), 0)
+
+        try:
+            with cm.connection('dn', 'pass'):
+                pass
+        except ldap.INVALID_CREDENTIALS:
             pass
         else:
             raise AssertionError()

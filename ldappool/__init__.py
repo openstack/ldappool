@@ -252,6 +252,11 @@ class ConnectionManager(object):
                 conn.timeout = self.timeout
                 self._bind(conn, bind, passwd)
                 connected = True
+            except ldap.INVALID_CREDENTIALS as error:
+                exc = error
+                log.error('Invalid credentials. Cancelling retry',
+                          exc_info=True)
+                break
             except ldap.LDAPError as error:
                 exc = error
                 time.sleep(self.retry_delay)
