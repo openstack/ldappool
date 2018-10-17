@@ -44,6 +44,7 @@ import time
 import ldap
 from ldap.ldapobject import ReconnectLDAPObject
 import six
+from six import PY2
 
 log = logging.getLogger(__name__)
 _utf8_encoder = codecs.getencoder('utf-8')
@@ -167,7 +168,8 @@ class ConnectionManager(object):
 
     def _match(self, bind, passwd):
         if passwd is not None:
-            passwd = utf8_encode(passwd)
+            if PY2:
+                passwd = utf8_encode(passwd)
         with self._pool_lock:
             inactives = []
 
@@ -240,7 +242,8 @@ class ConnectionManager(object):
         tries = 0
         connected = False
         if passwd is not None:
-            passwd = utf8_encode(passwd)
+            if PY2:
+                passwd = utf8_encode(passwd)
         exc = None
         conn = None
 
