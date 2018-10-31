@@ -250,6 +250,8 @@ class ConnectionManager(object):
         # trying retry_max times in a row with a fresh connector
         while tries < self.retry_max and not connected:
             try:
+                log.debug('Attempting to create a new connector '
+                          'to %s (attempt %d)', self.uri, tries + 1)
                 conn = self.connector_cls(self.uri, retry_max=self.retry_max,
                                           retry_delay=self.retry_delay)
                 conn.timeout = self.timeout
@@ -262,15 +264,15 @@ class ConnectionManager(object):
                 break
             except ldap.LDAPError as error:
                 exc = error
-                time.sleep(self.retry_delay)
+                tries += 1
                 if tries < self.retry_max:
                     log.info('Failure attempting to create and bind '
                              'connector; will retry after %r seconds',
                              self.retry_delay, exc_info=True)
+                    time.sleep(self.retry_delay)
                 else:
                     log.error('Failure attempting to create and bind '
                               'connector', exc_info=True)
-                tries += 1
 
         if not connected:
             if isinstance(exc, (ldap.NO_SUCH_OBJECT,
