@@ -51,6 +51,10 @@ Here are the options you can use when instanciating the pool:
 - **use_pool**: activates the pool. If False, will recreate a connector
   each time. **default: True**
 
+The **uri** option will accept a comma or whitespace separated list of LDAP
+server URIs to allow for failover behavior when connection errors are
+encountered.  Connections will be attempted against the servers in order,
+with **retry_max** attempts per URI before failing over to the next server.
 
 The **connection** method takes two options:
 
