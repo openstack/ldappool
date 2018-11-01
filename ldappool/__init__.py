@@ -43,6 +43,7 @@ import time
 
 import ldap
 from ldap.ldapobject import ReconnectLDAPObject
+from prettytable import PrettyTable
 import re
 import six
 from six import PY2
@@ -423,3 +424,20 @@ class ConnectionManager(object):
                     log.debug('Failure attempting to unbind on purge; '
                               'should be harmless', exc_info=True)
                 self._pool.remove(conn)
+
+    def __str__(self):
+        table = PrettyTable()
+        table.field_names = ['Slot (%d max)' % self.size,
+                             'Connected', 'Active', 'URI',
+                             'Lifetime (%d max)' % self.max_lifetime,
+                             'Bind DN']
+
+        with self._pool_lock:
+            for slot, conn in enumerate(self._pool):
+                table.add_row([
+                    slot + 1,
+                    'connected' if conn.connected else 'not connected',
+                    'active' if conn.active else 'inactive',
+                    conn._uri, conn.get_lifetime(), conn.who])
+
+        return str(table)

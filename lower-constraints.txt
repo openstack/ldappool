@@ -17,6 +17,7 @@ openstackdocstheme==1.18.1
 pbr==2.0.0
 pep257==0.7.0
 pep8==1.5.7
+prettytable==0.7.2
 pyflakes==0.8.1
 Pygments==2.2.0
 python-ldap==3.0.0

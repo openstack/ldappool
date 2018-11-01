@@ -32,6 +32,25 @@ context manager with the *connection* method::
 The connector returned by *connection* is a LDAPObject, that's binded to the
 server. See https://pypi.org/project/python-ldap/ for details on how to use a connector.
 
+It is possible to check the state of the pool by representing the pool as a string::
+
+    from ldappool import ConnectionManager
+
+    cm = ConnectionManager('ldap://localhost', size=2)
+
+    .. do something with cm ..
+
+    print(cm)
+
+This will result in output similar to this table::
+
+    +--------------+-----------+----------+------------------+--------------------+------------------------------+
+    | Slot (2 max) | Connected |  Active  |       URI        | Lifetime (600 max) |           Bind DN            |
+    +--------------+-----------+----------+------------------+--------------------+------------------------------+
+    |      1       | connected | inactive | ldap://localhost |  0.00496101379395  | uid=tuser,dc=example,dc=test |
+    |      2       | connected | inactive | ldap://localhost |  0.00532603263855  | uid=tuser,dc=example,dc=test |
+    +--------------+-----------+----------+------------------+--------------------+------------------------------+
+
 
 ConnectionManager options
 :::::::::::::::::::::::::
