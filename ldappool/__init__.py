@@ -43,6 +43,7 @@ import time
 
 import ldap
 from ldap.ldapobject import ReconnectLDAPObject
+import re
 import six
 from six import PY2
 
@@ -239,50 +240,69 @@ class ConnectionManager(object):
         :returns: StateConnector
         :raises BackendError: If unable to connect to LDAP
         """
-        tries = 0
         connected = False
         if passwd is not None:
             if PY2:
                 passwd = utf8_encode(passwd)
-        exc = None
-        conn = None
 
-        # trying retry_max times in a row with a fresh connector
-        while tries < self.retry_max and not connected:
-            try:
-                log.debug('Attempting to create a new connector '
-                          'to %s (attempt %d)', self.uri, tries + 1)
-                conn = self.connector_cls(self.uri, retry_max=self.retry_max,
-                                          retry_delay=self.retry_delay)
-                conn.timeout = self.timeout
-                self._bind(conn, bind, passwd)
-                connected = True
-            except ldap.INVALID_CREDENTIALS as error:
-                exc = error
-                log.error('Invalid credentials. Cancelling retry',
-                          exc_info=True)
-                break
-            except ldap.LDAPError as error:
-                exc = error
-                tries += 1
-                if tries < self.retry_max:
-                    log.info('Failure attempting to create and bind '
-                             'connector; will retry after %r seconds',
-                             self.retry_delay, exc_info=True)
-                    time.sleep(self.retry_delay)
-                else:
-                    log.error('Failure attempting to create and bind '
-                              'connector', exc_info=True)
+        # If multiple server URIs have been provided, loop through
+        # each one in turn in case of connection failures (server down,
+        # timeout, etc.).  URIs can be delimited by either commas or
+        # whitespace.
+        for server in re.split('[\s,]+', self.uri):
+            tries = 0
+            exc = None
+            conn = None
 
+            # trying retry_max times in a row with a fresh connector
+            while tries < self.retry_max and not connected:
+                try:
+                    log.debug('Attempting to create a new connector '
+                              'to %s (attempt %d)', server, tries + 1)
+                    conn = self.connector_cls(server, retry_max=self.retry_max,
+                                              retry_delay=self.retry_delay)
+                    conn.timeout = self.timeout
+                    self._bind(conn, bind, passwd)
+                    connected = True
+                except ldap.INVALID_CREDENTIALS as error:
+                    # Treat this as a hard failure instead of retrying to
+                    # avoid locking out the LDAP account due to successive
+                    # failed bind attempts.  We also don't want to try
+                    # connecting to additional servers if multiple URIs were
+                    # provide, as failed bind attempts may be replicated
+                    # across multiple LDAP servers.
+                    exc = error
+                    log.error('Invalid credentials. Cancelling retry',
+                              exc_info=True)
+                    raise exc
+                except ldap.LDAPError as error:
+                    exc = error
+                    tries += 1
+                    if tries < self.retry_max:
+                        log.info('Failure attempting to create and bind '
+                                 'connector; will retry after %r seconds',
+                                 self.retry_delay, exc_info=True)
+                        time.sleep(self.retry_delay)
+                    else:
+                        log.error('Failure attempting to create and bind '
+                                  'connector', exc_info=True)
+
+            # We successfully connected to one of the servers, so
+            # we can just return the connection and stop processing
+            # any additional URIs.
+            if connected:
+                return conn
+
+        # We failed to connect to any of the servers,
+        # so raise an appropriate exception.
         if not connected:
             if isinstance(exc, (ldap.NO_SUCH_OBJECT,
-                                ldap.INVALID_CREDENTIALS,
-                                ldap.SERVER_DOWN)):
+                                ldap.SERVER_DOWN,
+                                ldap.TIMEOUT)):
                 raise exc
 
-            # that's something else
-            raise BackendError(str(exc), backend=conn)
-        return conn
+        # that's something else
+        raise BackendError(str(exc), backend=conn)
 
     def _get_connection(self, bind=None, passwd=None):
         if bind is None:

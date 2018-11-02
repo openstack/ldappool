@@ -51,12 +51,49 @@ def _bind_fails(self, who='', cred='', **kw):
     raise ldap.LDAPError('LDAP connection invalid')
 
 
-def _bind_fails2(self, who='', cred='', **kw):
+def _bind_fails_server_down(self, who='', cred='', **kw):
     raise ldap.SERVER_DOWN('LDAP connection invalid')
+
+
+def _bind_fails_server_down_failover(self, who='', cred='', **kw):
+    # Raise a server down error unless the URI is 'ldap://GOOD'
+    if self._uri == 'ldap://GOOD':
+        self.connected = True
+        self.who = who
+        self.cred = cred
+        return 1
+    else:
+        raise ldap.SERVER_DOWN('LDAP connection invalid')
+
+
+def _bind_fails_timeout(self, who='', cred='', **kw):
+    raise ldap.TIMEOUT('LDAP connection timeout')
+
+
+def _bind_fails_timeout_failover(self, who='', cred='', **kw):
+    # Raise a timeout error unless the URI is 'ldap://GOOD'
+    if self._uri == 'ldap://GOOD':
+        self.connected = True
+        self.who = who
+        self.cred = cred
+        return 1
+    else:
+        raise ldap.TIMEOUT('LDAP connection timeout')
 
 
 def _bind_fails_invalid_credentials(self, who='', cred='', **kw):
     raise ldap.INVALID_CREDENTIALS('LDAP connection invalid')
+
+
+def _bind_fails_invalid_credentials_failover(self, who='', cred='', **kw):
+    # Raise invalid credentials erorr unless the URI is 'ldap://GOOD'
+    if self._uri == 'ldap://GOOD':
+        self.connected = True
+        self.who = who
+        self.cred = cred
+        return 1
+    else:
+        raise ldap.INVALID_CREDENTIALS('LDAP connection invalid')
 
 
 def _start_tls_s(self):
@@ -146,7 +183,7 @@ class TestLDAPConnection(unittest.TestCase):
             unbinds.append(1)
 
         # the binding fails with an LDAPError
-        ldappool.StateConnector.simple_bind_s = _bind_fails2
+        ldappool.StateConnector.simple_bind_s = _bind_fails_server_down
         ldappool.StateConnector.unbind_s = _unbind
         uri = ''
         dn = 'uid=adminuser,ou=logins,dc=mozilla'
@@ -160,6 +197,80 @@ class TestLDAPConnection(unittest.TestCase):
         except ldap.SERVER_DOWN:
             pass
         else:
+            raise AssertionError()
+
+    def test_simple_bind_fails_failover(self):
+        unbinds = []
+
+        def _unbind(self):
+            unbinds.append(1)
+
+        # the binding to any server other than 'ldap://GOOD' fails
+        # with ldap.SERVER_DOWN
+        ldappool.StateConnector.simple_bind_s = \
+            _bind_fails_server_down_failover
+        ldappool.StateConnector.unbind_s = _unbind
+        uri = 'ldap://BAD,ldap://GOOD'
+        dn = 'uid=adminuser,ou=logins,dc=mozilla'
+        passwd = 'adminuser'
+        cm = ldappool.ConnectionManager(uri, dn, passwd, use_pool=True, size=2)
+        self.assertEqual(len(cm), 0)
+
+        try:
+            with cm.connection('dn', 'pass') as conn:
+                # Ensure we failed over to the second URI
+                self.assertTrue(conn.active)
+                self.assertEqual(conn._uri, 'ldap://GOOD')
+                pass
+        except Exception:
+            raise AssertionError()
+
+    def test_simple_bind_fails_timeout(self):
+        unbinds = []
+
+        def _unbind(self):
+            unbinds.append(1)
+
+        # the binding fails with ldap.TIMEOUT
+        ldappool.StateConnector.simple_bind_s = _bind_fails_timeout
+        ldappool.StateConnector.unbind_s = _unbind
+        uri = ''
+        dn = 'uid=adminuser,ou=logins,dc=mozilla'
+        passwd = 'adminuser'
+        cm = ldappool.ConnectionManager(uri, dn, passwd, use_pool=True, size=2)
+        self.assertEqual(len(cm), 0)
+
+        try:
+            with cm.connection('dn', 'pass'):
+                pass
+        except ldap.TIMEOUT:
+            pass
+        else:
+            raise AssertionError()
+
+    def test_simple_bind_fails_timeout_failover(self):
+        unbinds = []
+
+        def _unbind(self):
+            unbinds.append(1)
+
+        # the binding to any server other than 'ldap://GOOD' fails
+        # with ldap.TIMEOUT
+        ldappool.StateConnector.simple_bind_s = _bind_fails_timeout_failover
+        ldappool.StateConnector.unbind_s = _unbind
+        uri = 'ldap://BAD,ldap://GOOD'
+        dn = 'uid=adminuser,ou=logins,dc=mozilla'
+        passwd = 'adminuser'
+        cm = ldappool.ConnectionManager(uri, dn, passwd, use_pool=True, size=2)
+        self.assertEqual(len(cm), 0)
+
+        try:
+            with cm.connection('dn', 'pass') as conn:
+                # Ensure we failed over to the second URI
+                self.assertTrue(conn.active)
+                self.assertEqual(conn._uri, 'ldap://GOOD')
+                pass
+        except Exception:
             raise AssertionError()
 
     def test_simple_bind_fails_invalid_credentials(self):
@@ -178,6 +289,34 @@ class TestLDAPConnection(unittest.TestCase):
         self.assertEqual(len(cm), 0)
 
         try:
+            with cm.connection('dn', 'pass'):
+                pass
+        except ldap.INVALID_CREDENTIALS:
+            pass
+        else:
+            raise AssertionError()
+
+    def test_simple_bind_fails_invalid_credentials_failover(self):
+        unbinds = []
+
+        def _unbind(self):
+            unbinds.append(1)
+
+        # the binding to any server other than 'ldap://GOOD' fails
+        # with ldap.INVALID_CREDENTIALS
+        ldappool.StateConnector.simple_bind_s = \
+            _bind_fails_invalid_credentials_failover
+        ldappool.StateConnector.unbind_s = _unbind
+        uri = 'ldap://BAD,ldap://GOOD'
+        dn = 'uid=adminuser,ou=logins,dc=mozilla'
+        passwd = 'adminuser'
+        cm = ldappool.ConnectionManager(uri, dn, passwd, use_pool=True, size=2)
+        self.assertEqual(len(cm), 0)
+
+        try:
+            # We expect this to throw an INVALID_CREDENTIALS exception for the
+            # first URI, as this is a hard-failure where we don't want failover
+            # to occur to subsequent URIs.
             with cm.connection('dn', 'pass'):
                 pass
         except ldap.INVALID_CREDENTIALS:
