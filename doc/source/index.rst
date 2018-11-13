@@ -25,7 +25,7 @@ using `Gerrit`_.
 
 .. _on GitHub: https://github.com/openstack/ldappool
 .. _Launchpad: https://launchpad.net/ldappool
-.. _Gerrit: http://docs.openstack.org/infra/manual/developers.html#development-workflow
+.. _Gerrit: https://docs.openstack.org/infra/manual/developers.html#development-workflow
 
 Run tests with ``tox``.
 
