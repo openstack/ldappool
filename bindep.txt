@@ -1,0 +1,10 @@
+# See openstack-infra/project-config:jenkins/data/bindep-fallback.txt
+# This is used by bindep: sudo [apt-get | yum] install $(bindep -b)
+
+libldap2-dev [platform:dpkg]
+libsasl2-dev [platform:dpkg]
+
+cyrus-sasl-devel [platform:rpm]
+openldap-devel [platform:redhat]
+
+openldap2-devel [platform:suse]
