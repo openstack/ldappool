@@ -1,23 +1,25 @@
 ldappool
 ========
 
-Contents:
+Contents
+--------
 
 .. toctree::
    :maxdepth: 1
+
+.. only:: html
 
    api/modules
 
 Release Notes
-=============
+--------------
 
-.. toctree::
-   :maxdepth: 1
+`Release Notes`_
 
-   history
+.. _Release Notes: https://docs.openstack.org/releasenotes/ldappool/
 
 Contributing
-============
+------------
 
 Code is hosted `on GitHub`_. Submit bugs to the Keystone project on
 `Launchpad`_. Submit code to the ``openstack/ldappool`` project
@@ -30,7 +32,7 @@ using `Gerrit`_.
 Run tests with ``tox``.
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
