@@ -250,7 +250,7 @@ class ConnectionManager(object):
         # each one in turn in case of connection failures (server down,
         # timeout, etc.).  URIs can be delimited by either commas or
         # whitespace.
-        for server in re.split('[\s,]+', self.uri):
+        for server in re.split(r'[\s,]+', self.uri):
             tries = 0
             exc = None
             conn = None

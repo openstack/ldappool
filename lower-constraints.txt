@@ -5,9 +5,6 @@ docutils==0.11
 dulwich==0.15.0
 extras==1.0.0
 fixtures==3.0.0
-flake8-docstrings==0.2.1.post1
-flake8==2.5.5
-hacking==0.12.0
 imagesize==0.7.1
 Jinja2==2.10
 linecache2==1.0.0
@@ -16,9 +13,7 @@ mccabe==0.2.1
 openstackdocstheme==1.18.1
 pbr==2.0.0
 pep257==0.7.0
-pep8==1.5.7
 prettytable==0.7.2
-pyflakes==0.8.1
 Pygments==2.2.0
 python-ldap==3.0.0
 python-mimeparse==1.6.0
