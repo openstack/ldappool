@@ -96,11 +96,25 @@ def _bind_fails_invalid_credentials_failover(self, who='', cred='', **kw):
         raise ldap.INVALID_CREDENTIALS('LDAP connection invalid')
 
 
+def _bind_fails_tls_failover(self, who='', cred='', **kw):
+    # Raise backend error unless the URI is 'ldap://GOOD'
+    if self._uri == 'ldap://GOOD':
+        self.connected = True
+        self.who = who
+        self.cred = cred
+        return 1
+    else:
+        raise ldappool.BackendError
+
+
 def _start_tls_s(self):
+    # Raise a server down error if the URI is 'ldap://BAD'
     if self.start_tls_already_called_flag:
         raise ldap.LOCAL_ERROR
     else:
         self.start_tls_already_called_flag = True
+    if self._uri == 'ldap://BAD':
+        raise ldap.SERVER_DOWN('LDAP connection invalid')
 
 
 class TestLDAPConnection(unittest.TestCase):
@@ -322,4 +336,30 @@ class TestLDAPConnection(unittest.TestCase):
         except ldap.INVALID_CREDENTIALS:
             pass
         else:
+            raise AssertionError()
+
+    def test_simple_bind_fails_tls_failover(self):
+        unbinds = []
+
+        def _unbind(self):
+            unbinds.append(1)
+
+        # the binding to any server other than 'ldap://GOOD' fails
+        # with ldap.SERVER_DOWN
+        ldappool.StateConnector.simple_bind_s = _bind_fails_tls_failover
+        ldappool.StateConnector.unbind_s = _unbind
+        uri = 'ldap://BAD,ldap://GOOD'
+        dn = 'uid=adminuser,ou=logins,dc=mozilla'
+        passwd = 'adminuser'
+        cm = ldappool.ConnectionManager(uri, dn, passwd, use_pool=True,
+                                        size=2, use_tls=True)
+        self.assertEqual(len(cm), 0)
+
+        try:
+            with cm.connection('dn', 'pass') as conn:
+                # Ensure we failed over to the second URI
+                self.assertTrue(conn.active)
+                self.assertEqual(conn._uri, 'ldap://GOOD')
+                pass
+        except Exception:
             raise AssertionError()

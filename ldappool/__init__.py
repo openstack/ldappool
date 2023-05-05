@@ -212,12 +212,7 @@ class ConnectionManager(object):
     def _bind(self, conn, bind, passwd):
         # let's bind
         if self.use_tls:
-            try:
-                conn.start_tls_s()
-            except Exception:
-                raise BackendError('Could not activate TLS on established '
-                                   'connection with %s' % self.uri,
-                                   backend=conn)
+            conn.start_tls_s()
 
         if bind is not None:
             conn.simple_bind_s(bind, passwd)
