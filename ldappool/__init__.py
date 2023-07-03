@@ -73,7 +73,7 @@ class MaxConnectionReachedError(Exception):
 
 class BackendError(Exception):
     def __init__(self, msg, backend):
-        self.bacend = backend
+        self.backend = backend
         Exception.__init__(self, msg)
 
 
