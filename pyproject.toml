@@ -9,12 +9,11 @@ authors = [
     {name = "OpenStack", email = "openstack-discuss@lists.openstack.org"},
 ]
 readme = {file = "README.rst", content-type = "text/x-rst"}
-license = {text = "MPL-2.0"}
+license = "MPL-2.0"
 dynamic = ["version", "dependencies"]
 requires-python = ">=3.11"
 classifiers = [
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
   "Operating System :: POSIX :: Linux",
   "Programming Language :: Python",
   "Programming Language :: Python :: Implementation :: CPython",
@@ -23,13 +22,12 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
 ]
 
 [project.urls]
 Homepage = "https://opendev.org/openstack/ldappool"
 Repository = "https://opendev.org/openstack/ldappool"
 
-[tool.setuptools]
-packages = [
-    "ldappool"
-]
+[tool.setuptools.packages.find]
+include = ["ldappool*"]
